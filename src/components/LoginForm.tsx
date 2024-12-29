@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import {
   TextField,
   Button,
@@ -6,33 +6,39 @@ import {
   Typography,
   CircularProgress,
 } from "@mui/material";
-import { useMutation, UseMutationResult } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
+
 import { loginUser, LoginPayload } from "../api/authApi.ts";
 import { useNavigate } from "react-router-dom";
+import { AuthContext } from "../context/AuthContext.tsx";
 
 const LoginForm: React.FC = () => {
+  const { login } = useContext(AuthContext); // Use login function from AuthContext
   const navigate = useNavigate();
+
+  // Form state
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  // Properly typed mutation
-  const mutation: UseMutationResult<string, Error, LoginPayload, unknown> =
-    useMutation({
-      mutationFn: loginUser,
-      onSuccess: (token) => {
-        localStorage.setItem("token", token); // Save token
-        navigate("/"); // Redirect to Dashboard
-      },
-      onError: () => {
-        setError("Invalid email or password.");
-      },
-    });
+  // Mutation for logging in
+  const mutation = useMutation({
+    mutationFn: loginUser,
+    onSuccess: (token) => {
+      localStorage.setItem("token", token); // Save token in localStorage
+      login(); // Update AuthContext to reflect login state
+      navigate("/"); // Redirect to dashboard
+    },
+    onError: () => {
+      setError("Invalid email or password. Please try again.");
+    },
+  });
 
+  // Handle form submission
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null); // Clear previous errors
-    mutation.mutate({ email, password }); // Pass correct payload
+    setError(null); // Clear any previous errors
+    mutation.mutate({ email, password }); // Trigger mutation
   };
 
   return (
@@ -41,7 +47,7 @@ const LoginForm: React.FC = () => {
       onSubmit={handleSubmit}
       sx={{ maxWidth: 400, mx: "auto", p: 3 }}
     >
-      <Typography variant="h4" sx={{ mb: 3 }}>
+      <Typography variant="h4" sx={{ mb: 3, textAlign: "center" }}>
         Login
       </Typography>
       {error && (
@@ -53,6 +59,7 @@ const LoginForm: React.FC = () => {
         label="Email"
         type="email"
         fullWidth
+        required
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         sx={{ mb: 2 }}
@@ -61,6 +68,7 @@ const LoginForm: React.FC = () => {
         label="Password"
         type="password"
         fullWidth
+        required
         value={password}
         onChange={(e) => setPassword(e.target.value)}
         sx={{ mb: 3 }}
@@ -70,7 +78,7 @@ const LoginForm: React.FC = () => {
         variant="contained"
         color="primary"
         fullWidth
-        disabled={mutation.status === "pending"} // Use "pending" to check loading state
+        disabled={mutation.status === "pending"} // Disable button while loading
       >
         {mutation.status === "pending" ? (
           <CircularProgress size={24} sx={{ color: "white" }} />

@@ -9,20 +9,20 @@ const Navbar: React.FC = () => {
 
   const handleLogout = () => {
     logout();
-    navigate("/login");
+    navigate("/"); // Redirect to homepage after logout
   };
 
   return (
-    <AppBar position="static" color="primary" elevation={0} sx={{ mb: 4 }}>
+    <AppBar position="static" color="primary" sx={{ mb: 4 }}>
       <Toolbar>
-        <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: 600 }}>
+        <Typography variant="h6" sx={{ flexGrow: 1 }}>
           Newsly
         </Typography>
         <Box>
           <Button color="inherit" component={Link} to="/" sx={{ mx: 1 }}>
             Dashboard
           </Button>
-          {!isLoggedIn && (
+          {!isLoggedIn ? (
             <>
               <Button
                 color="inherit"
@@ -41,8 +41,7 @@ const Navbar: React.FC = () => {
                 Register
               </Button>
             </>
-          )}
-          {isLoggedIn && (
+          ) : (
             <Button color="inherit" onClick={handleLogout} sx={{ mx: 1 }}>
               Logout
             </Button>

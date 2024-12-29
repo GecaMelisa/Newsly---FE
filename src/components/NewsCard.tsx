@@ -1,13 +1,33 @@
-import React from "react";
-import { Card, CardContent, Typography, Chip, Box } from "@mui/material";
+import React, { useContext } from "react";
+import {
+  Card,
+  CardContent,
+  Typography,
+  Chip,
+  Box,
+  Button,
+  Stack,
+} from "@mui/material";
 import { News } from "../api/newsApi.ts";
+import { getUserEmailFromToken } from "../utils/tokenUtils.ts";
+import { AuthContext } from "../context/AuthContext.tsx";
 
 interface NewsCardProps {
   news: News;
-  onClick: () => void; // Pass a click handler to trigger the modal
+  onClick: () => void;
+  onEdit: (news: News) => void;
+  onDelete: (newsId: number) => void;
 }
 
-const NewsCard: React.FC<NewsCardProps> = ({ news, onClick }) => {
+const NewsCard: React.FC<NewsCardProps> = ({
+  news,
+  onClick,
+  onEdit,
+  onDelete,
+}) => {
+  const { isLoggedIn } = useContext(AuthContext);
+  const userEmail = isLoggedIn ? getUserEmailFromToken() : null; // Decode user email only if logged in
+
   return (
     <Card
       sx={{
@@ -21,15 +41,46 @@ const NewsCard: React.FC<NewsCardProps> = ({ news, onClick }) => {
     >
       <CardContent>
         <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
-          <Chip label="News" color="primary" />
+          <Chip label={news.category_name || "News"} color="primary" />
           <Typography variant="caption">{news.date}</Typography>
         </Box>
         <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
           {news.title}
         </Typography>
-        <Typography variant="body2" color="text.secondary">
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
           {news.content.slice(0, 100)}...
         </Typography>
+        <Typography variant="body2" sx={{ fontStyle: "italic", mb: 2 }}>
+          Published by: <strong>{news.user_name}</strong>
+        </Typography>
+
+        {/* Show Edit and Delete buttons only for the logged-in user's news */}
+        {isLoggedIn && news.email === userEmail && (
+          <Stack direction="row" spacing={1} sx={{ mt: 2 }}>
+            <Button
+              variant="outlined"
+              color="primary"
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation(); // Prevent modal from opening
+                onEdit(news);
+              }}
+            >
+              Edit
+            </Button>
+            <Button
+              variant="outlined"
+              color="error"
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation(); // Prevent modal from opening
+                onDelete(news.id);
+              }}
+            >
+              Delete
+            </Button>
+          </Stack>
+        )}
       </CardContent>
     </Card>
   );

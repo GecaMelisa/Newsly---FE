@@ -25,3 +25,10 @@ export const fetchNewsByCategoryId = async (
   const response = await axios.get(`/api/news/category/${categoryId}`);
   return response.data;
 };
+
+export const suggestCategory = async (content: string): Promise<string> => {
+  const response = await apiClient.post("/api/categories/generate", {
+    content,
+  });
+  return response.data; // Backend should return the suggested category name
+};
