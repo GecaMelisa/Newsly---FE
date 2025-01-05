@@ -12,7 +12,8 @@ import {
 import { useMutation } from "@tanstack/react-query";
 import { createNews, CreateNewsPayload } from "../api/newsApi.ts";
 import { suggestCategory } from "../api/categoryApi.ts";
-import { getUserIdFromToken } from "../utils/tokenUtils.ts"; // Import utility function
+import { getUserIdFromToken } from "../utils/tokenUtils.ts";
+import { toast } from "react-toastify";
 
 interface CreateNewsModalProps {
   open: boolean;
@@ -32,10 +33,12 @@ const CreateNewsModal: React.FC<CreateNewsModalProps> = ({ open, onClose }) => {
   const mutation = useMutation({
     mutationFn: createNews,
     onSuccess: () => {
-      onClose(); // Close modal on success
+      toast.success("News created successfully! 🎉");
+      onClose();
     },
-    onError: () => {
-      setError("Failed to create news. Please try again.");
+    onError: (error) => {
+      toast.error("Failed to create news. Please try again.");
+      console.error("Create news error:", error);
     },
   });
 
@@ -56,10 +59,15 @@ const CreateNewsModal: React.FC<CreateNewsModalProps> = ({ open, onClose }) => {
   };
 
   const handleSubmit = () => {
-    const user_id = getUserIdFromToken(); // Get user_id from token
+    const user_id = getUserIdFromToken(); // Ensure the token is correctly retrieved
+
+    const rawDate = date.split("-");
+    const newDate = rawDate[2] + "." + rawDate[1] + "." + rawDate[0] + ".";
+    console.log(newDate);
 
     if (!user_id) {
       setError("User not authenticated. Please log in again.");
+      console.error("User ID not found in token.");
       return;
     }
 
@@ -71,12 +79,13 @@ const CreateNewsModal: React.FC<CreateNewsModalProps> = ({ open, onClose }) => {
     const payload: CreateNewsPayload = {
       title,
       content,
-      date,
+      date: newDate,
       category_name: categoryName,
       user_id,
     };
 
-    mutation.mutate(payload); // Send correct payload
+    console.log("Submitting payload:", payload);
+    mutation.mutate(payload);
   };
 
   return (

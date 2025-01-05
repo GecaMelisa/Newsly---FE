@@ -25,7 +25,7 @@ const LoginForm: React.FC = () => {
   const mutation = useMutation({
     mutationFn: loginUser,
     onSuccess: (token) => {
-      localStorage.setItem("token", token); // Save token in localStorage
+      localStorage.setItem("token", token.split(" ")[1]); // Save token in localStorage
       login(); // Update AuthContext to reflect login state
       navigate("/"); // Redirect to dashboard
     },

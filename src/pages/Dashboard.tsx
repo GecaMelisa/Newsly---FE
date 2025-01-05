@@ -7,6 +7,8 @@ import CreateNewsModal from "../components/CreateNewsModal.tsx";
 import EditNewsModal from "../components/EditNewsModal.tsx";
 import { News, deleteNews } from "../api/newsApi.ts";
 import { useMutation } from "@tanstack/react-query";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const Dashboard: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -19,15 +21,14 @@ const Dashboard: React.FC = () => {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editingNews, setEditingNews] = useState<News | null>(null);
 
-  // Mutation for deleting news
+  // Mutation for deleting news with toasts
   const deleteMutation = useMutation<void, Error, number>({
     mutationFn: deleteNews,
     onSuccess: () => {
-      console.log("News deleted successfully");
-      // Optionally refresh categories or invalidate queries here
+      toast.success("News deleted successfully!");
     },
     onError: (error) => {
-      console.error("Error deleting news:", error);
+      toast.error(`Error deleting news: ${error.message}`);
     },
   });
 
@@ -37,7 +38,7 @@ const Dashboard: React.FC = () => {
         const categoriesData = await fetchCategories();
         setCategories(categoriesData);
       } catch (err) {
-        setError("Failed to load categories.");
+        toast.error("Failed to load categories.");
       } finally {
         setLoading(false);
       }
@@ -79,6 +80,9 @@ const Dashboard: React.FC = () => {
 
   return (
     <Box sx={{ p: 4 }}>
+      {/* Toast Container */}
+      <ToastContainer position="top-right" autoClose={3000} />
+
       <Box
         sx={{
           display: "flex",
@@ -106,8 +110,8 @@ const Dashboard: React.FC = () => {
             <CategoryContainer
               categoryId={category.id}
               categoryName={category.name}
-              onEdit={handleOpenEditModal} // Pass edit handler
-              onDelete={handleDelete} // Pass delete handler
+              onEdit={handleOpenEditModal}
+              onDelete={handleDelete}
             />
           </Grid>
         ))}

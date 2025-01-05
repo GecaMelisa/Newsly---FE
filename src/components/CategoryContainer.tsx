@@ -33,6 +33,7 @@ const CategoryContainer: React.FC<CategoryContainerProps> = ({
     const fetchNews = async () => {
       try {
         const newsData = await fetchNewsByCategoryId(categoryId);
+        console.log(newsData);
         setNews(newsData);
       } catch (err) {
         setError("Failed to load news.");
