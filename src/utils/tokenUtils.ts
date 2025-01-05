@@ -1,6 +1,22 @@
-/**
- * Extracts the user's email from the JWT stored in localStorage.
- */
+export const getUserIdFromToken = (): number | null => {
+  const token = localStorage.getItem("token");
+  if (!token) {
+    console.error("Token not found in local storage.");
+    return null;
+  }
+
+  try {
+    const payloadBase64 = token.split(".")[1];
+    const payload = JSON.parse(
+      atob(payloadBase64.replace(/-/g, "+").replace(/_/g, "/"))
+    );
+    return payload.user_id;
+  } catch (error) {
+    console.error("Error decoding token:", error);
+    return null;
+  }
+};
+
 export const getUserEmailFromToken = (): string | null => {
   const token = localStorage.getItem("token");
   if (!token) return null;
@@ -8,26 +24,13 @@ export const getUserEmailFromToken = (): string | null => {
   try {
     const payload = token.split(".")[1];
     const decoded = JSON.parse(atob(payload));
-    return decoded.sub || null; // Assuming `sub` contains the user's email
+    return decoded.sub;
   } catch (error) {
     console.error("Failed to decode token", error);
     return null;
   }
 };
 
-/**
- * Extracts the user's ID from the JWT stored in localStorage.
- */
-export const getUserIdFromToken = (): number | null => {
-  const token = localStorage.getItem("token");
-  if (!token) return null;
-
-  try {
-    const payload = token.split(".")[1]; // Extract the payload part of the JWT
-    const decoded = JSON.parse(atob(payload)); // Decode Base64 payload
-    return decoded.user_id || null; // Assuming `user_id` contains the user's ID
-  } catch (error) {
-    console.error("Failed to decode token", error);
-    return null;
-  }
+export const removeToken = () => {
+  localStorage.removeItem("token");
 };

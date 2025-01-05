@@ -11,17 +11,19 @@ import {
 } from "@mui/material";
 import { useMutation } from "@tanstack/react-query";
 import { updateNews, UpdateNewsPayload } from "../api/newsApi.ts";
+import { getUserIdFromToken } from "../utils/tokenUtils.ts";
 
 interface EditNewsModalProps {
   open: boolean;
   onClose: () => void;
-  news: UpdateNewsPayload | null; // Allow null to handle initial state
+  news: UpdateNewsPayload | null;
 }
 
 // Helper functions for date formatting
 const formatDateForInput = (dateString: string): string => {
+  if (!dateString) return "";
   const [day, month, year] = dateString.split(".");
-  return `${year}-${month}-${day}`;
+  return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
 };
 
 const formatDateForOutput = (inputDate: string): string => {
@@ -34,25 +36,32 @@ const EditNewsModal: React.FC<EditNewsModalProps> = ({
   onClose,
   news,
 }) => {
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-  const [categoryName, setCategoryName] = useState("");
-  const [date, setDate] = useState(""); // Ensure correct date format
+  const [title, setTitle] = useState(news?.title || "");
+  const [content, setContent] = useState(news?.content || "");
+  const [categoryName, setCategoryName] = useState(news?.category_name || "");
+  const [date, setDate] = useState(
+    news?.date ? formatDateForInput(news.date) : ""
+  );
+  const [newsId, setNewsId] = useState<number | null>(news?.id || null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (news) {
+    if (news && news.id) {
       setTitle(news.title);
       setContent(news.content);
       setCategoryName(news.category_name);
-      setDate(formatDateForInput(news.date)); // Convert to `yyyy-MM-dd` for input
+      setDate(formatDateForInput(news.date));
+      setNewsId(news.id);
+    } else {
+      setError("Invalid news data. News ID is missing.");
     }
   }, [news]);
 
   const mutation = useMutation({
     mutationFn: updateNews,
     onSuccess: () => {
-      onClose(); // Close modal on success
+      window.location.reload();
+      onClose();
     },
     onError: (err: any) => {
       console.error("Update error:", err);
@@ -61,22 +70,24 @@ const EditNewsModal: React.FC<EditNewsModalProps> = ({
   });
 
   const handleSubmit = () => {
+    const user_id = getUserIdFromToken();
     if (!title || !content || !categoryName || !date) {
       setError("All fields are required.");
       return;
     }
 
-    if (!news || !news.id) {
-      setError("Invalid news data.");
+    if (!newsId) {
+      setError("Invalid news data. News ID is missing.");
       return;
     }
 
     const payload: UpdateNewsPayload = {
-      id: news.id, // Ensure correct ID is used
+      id: newsId,
       title,
       content,
       category_name: categoryName,
-      date: formatDateForOutput(date), // Convert back to `dd.MM.yyyy.`
+      date: formatDateForOutput(date),
+      user_id: user_id ?? undefined,
     };
 
     console.log("Submitting update payload:", payload);

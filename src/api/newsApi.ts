@@ -1,5 +1,10 @@
 import apiClient from "./axiosConfig.ts";
+import { QueryClient } from "@tanstack/react-query";
 
+// Initialize the QueryClient
+const queryClient = new QueryClient();
+
+// Interface for News
 export interface News {
   id: number;
   title: string;
@@ -22,11 +27,12 @@ export interface CreateNewsPayload {
 
 // Interface for updating news
 export interface UpdateNewsPayload {
-  id: number; // Use `id` to match the backend
+  id: number;
   title: string;
   content: string;
   date: string;
   category_name: string;
+  user_id?: number;
 }
 
 // Fetch news by category ID
@@ -55,6 +61,7 @@ export const createNews = async (data: CreateNewsPayload): Promise<News> => {
   const response = await apiClient.post("/api/news", data, {
     headers: { Authorization: `Bearer ${token}` },
   });
+  await queryClient.invalidateQueries({ queryKey: ["news"] });
   return response.data;
 };
 
@@ -64,6 +71,7 @@ export const updateNews = async (data: UpdateNewsPayload): Promise<News> => {
   const response = await apiClient.put(`/api/news/${data.id}`, data, {
     headers: { Authorization: `Bearer ${token}` },
   });
+  await queryClient.invalidateQueries({ queryKey: ["news"] });
   return response.data;
 };
 
@@ -73,4 +81,5 @@ export const deleteNews = async (id: number): Promise<void> => {
   await apiClient.delete(`/api/news/${id}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
+  await queryClient.invalidateQueries({ queryKey: ["news"] });
 };

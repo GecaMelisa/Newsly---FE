@@ -64,6 +64,7 @@ const NewsCard: React.FC<NewsCardProps> = ({
               onClick={(e) => {
                 e.stopPropagation(); // Prevent modal from opening
                 onEdit(news);
+                console.log(news);
               }}
             >
               Edit
