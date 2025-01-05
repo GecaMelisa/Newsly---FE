@@ -12,12 +12,8 @@ import {
 import { useMutation } from "@tanstack/react-query";
 import { updateNews, UpdateNewsPayload } from "../api/newsApi.ts";
 import { getUserIdFromToken } from "../utils/tokenUtils.ts";
-
-interface EditNewsModalProps {
-  open: boolean;
-  onClose: () => void;
-  news: UpdateNewsPayload | null;
-}
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 // Helper functions for date formatting
 const formatDateForInput = (dateString: string): string => {
@@ -30,6 +26,12 @@ const formatDateForOutput = (inputDate: string): string => {
   const [year, month, day] = inputDate.split("-");
   return `${day}.${month}.${year}.`;
 };
+
+interface EditNewsModalProps {
+  open: boolean;
+  onClose: () => void;
+  news: UpdateNewsPayload | null;
+}
 
 const EditNewsModal: React.FC<EditNewsModalProps> = ({
   open,
@@ -57,27 +59,30 @@ const EditNewsModal: React.FC<EditNewsModalProps> = ({
     }
   }, [news]);
 
+  // Initialize toast notifications globally
+
   const mutation = useMutation({
     mutationFn: updateNews,
     onSuccess: () => {
+      toast.success("News updated successfully! 🎉");
       window.location.reload();
       onClose();
     },
     onError: (err: any) => {
+      toast.error("Failed to update news. Please try again.");
       console.error("Update error:", err);
-      setError("Failed to update news. Please try again.");
     },
   });
 
   const handleSubmit = () => {
     const user_id = getUserIdFromToken();
     if (!title || !content || !categoryName || !date) {
-      setError("All fields are required.");
+      toast.warn("All fields are required.");
       return;
     }
 
     if (!newsId) {
-      setError("Invalid news data. News ID is missing.");
+      toast.error("Invalid news data. News ID is missing.");
       return;
     }
 

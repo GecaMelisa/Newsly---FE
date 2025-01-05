@@ -12,10 +12,19 @@ const Navbar: React.FC = () => {
     navigate("/"); // Redirect to homepage after logout
   };
 
+  const handleLogoClick = () => {
+    navigate("/"); // Redirect to the dashboard on logo click
+    window.location.reload(); // Ensure the page refreshes
+  };
+
   return (
     <AppBar position="static" color="primary" sx={{ mb: 4 }}>
       <Toolbar>
-        <Typography variant="h6" sx={{ flexGrow: 1 }}>
+        <Typography
+          variant="h6"
+          sx={{ flexGrow: 1, cursor: "pointer" }}
+          onClick={handleLogoClick}
+        >
           Newsly
         </Typography>
         <Box>

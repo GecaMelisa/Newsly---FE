@@ -55,31 +55,34 @@ export const fetchNewsByAuthor = async (email: string): Promise<News[]> => {
   return response.data;
 };
 
-// Create a news item
+// Create a news item and refresh the page
 export const createNews = async (data: CreateNewsPayload): Promise<News> => {
   const token = localStorage.getItem("token");
   const response = await apiClient.post("/api/news", data, {
     headers: { Authorization: `Bearer ${token}` },
   });
   await queryClient.invalidateQueries({ queryKey: ["news"] });
+  window.location.reload(); // Force page reload after creating news
   return response.data;
 };
 
-// Update a news item
+// Update a news item and refresh the page
 export const updateNews = async (data: UpdateNewsPayload): Promise<News> => {
   const token = localStorage.getItem("token");
   const response = await apiClient.put(`/api/news/${data.id}`, data, {
     headers: { Authorization: `Bearer ${token}` },
   });
   await queryClient.invalidateQueries({ queryKey: ["news"] });
+  window.location.reload(); // Force page reload after updating news
   return response.data;
 };
 
-// Delete a news item
+// Delete a news item and refresh the page
 export const deleteNews = async (id: number): Promise<void> => {
   const token = localStorage.getItem("token");
   await apiClient.delete(`/api/news/${id}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   await queryClient.invalidateQueries({ queryKey: ["news"] });
+  window.location.reload(); // Force page reload after deleting news
 };

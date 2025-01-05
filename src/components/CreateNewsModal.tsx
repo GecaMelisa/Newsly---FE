@@ -13,6 +13,7 @@ import { useMutation } from "@tanstack/react-query";
 import { createNews, CreateNewsPayload } from "../api/newsApi.ts";
 import { suggestCategory } from "../api/categoryApi.ts";
 import { getUserIdFromToken } from "../utils/tokenUtils.ts";
+import { toast } from "react-toastify";
 
 interface CreateNewsModalProps {
   open: boolean;
@@ -32,11 +33,11 @@ const CreateNewsModal: React.FC<CreateNewsModalProps> = ({ open, onClose }) => {
   const mutation = useMutation({
     mutationFn: createNews,
     onSuccess: () => {
-      alert("News created successfully!");
+      toast.success("News created successfully! 🎉");
       onClose();
     },
     onError: (error) => {
-      setError("Failed to create news. Please try again.");
+      toast.error("Failed to create news. Please try again.");
       console.error("Create news error:", error);
     },
   });
