@@ -4,6 +4,7 @@ import apiClient from "./axiosConfig.ts";
 
 // Interface for categories
 export interface Category {
+  news: any;
   id: number;
   name: string;
 }
