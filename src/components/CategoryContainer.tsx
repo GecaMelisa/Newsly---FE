@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   Grid,
   Typography,
@@ -8,13 +8,14 @@ import {
 } from "@mui/material";
 import NewsCard from "./NewsCard.tsx";
 import NewsDetailsModal from "./NewsDetailsModal.tsx";
-import { fetchNewsByCategoryId, News } from "../api/newsApi.ts";
+import { News } from "../api/newsApi.ts";
 
 interface CategoryContainerProps {
   categoryId: number;
   categoryName: string;
   onEdit: (news: News) => void;
   onDelete: (newsId: number) => void;
+  news: News[]; // ✅ Added news prop to receive data from Dashboard
 }
 
 const CategoryContainer: React.FC<CategoryContainerProps> = ({
@@ -22,45 +23,15 @@ const CategoryContainer: React.FC<CategoryContainerProps> = ({
   categoryName,
   onEdit,
   onDelete,
+  news, // ✅ Using the filtered news passed from Dashboard
 }) => {
-  const [news, setNews] = useState<News[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [selectedNews, setSelectedNews] = useState<News | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
-
-  useEffect(() => {
-    const fetchNews = async () => {
-      try {
-        const newsData = await fetchNewsByCategoryId(categoryId);
-        console.log(newsData);
-        setNews(newsData);
-      } catch (err) {
-        setError("Failed to load news.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchNews();
-  }, [categoryId]);
 
   const handleNewsClick = (news: News) => {
     setSelectedNews(news);
     setModalOpen(true);
   };
-
-  if (loading) {
-    return <CircularProgress sx={{ display: "block", margin: "2rem auto" }} />;
-  }
-
-  if (error) {
-    return (
-      <Typography color="error" align="center" sx={{ mb: 2 }}>
-        {error}
-      </Typography>
-    );
-  }
 
   return (
     <Card sx={{ mb: 3, boxShadow: 3 }}>
@@ -68,18 +39,25 @@ const CategoryContainer: React.FC<CategoryContainerProps> = ({
         <Typography variant="h5" gutterBottom sx={{ fontWeight: 600 }}>
           {categoryName}
         </Typography>
+
+        {/* ✅ Display filtered news directly */}
         <Grid container spacing={3}>
-          {news.map((item) => (
-            <Grid item xs={12} sm={6} md={4} key={item.id}>
-              <NewsCard
-                news={item}
-                onClick={() => handleNewsClick(item)}
-                onEdit={onEdit} // Pass edit handler
-                onDelete={onDelete} // Pass delete handler
-              />
-            </Grid>
-          ))}
+          {news.length > 0 ? (
+            news.map((item) => (
+              <Grid item xs={12} sm={6} md={4} key={item.id}>
+                <NewsCard
+                  news={item}
+                  onClick={() => handleNewsClick(item)}
+                  onEdit={onEdit}
+                  onDelete={onDelete}
+                />
+              </Grid>
+            ))
+          ) : (
+            <Typography>No news available for this category.</Typography>
+          )}
         </Grid>
+
         <NewsDetailsModal
           open={modalOpen}
           onClose={() => setModalOpen(false)}

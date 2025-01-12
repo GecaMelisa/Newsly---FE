@@ -1,27 +1,44 @@
 import React, { useEffect, useState, useContext } from "react";
-import { Grid, Typography, CircularProgress, Button, Box } from "@mui/material";
+import {
+  Grid,
+  Typography,
+  CircularProgress,
+  Button,
+  Box,
+  TextField,
+  MenuItem,
+  Select,
+  FormControl,
+  InputLabel,
+} from "@mui/material";
 import CategoryContainer from "../components/CategoryContainer.tsx";
 import { fetchCategories, Category } from "../api/categoryApi.ts";
+import { fetchNewsByCategoryId, News, deleteNews } from "../api/newsApi.ts";
 import { AuthContext } from "../context/AuthContext.tsx";
 import CreateNewsModal from "../components/CreateNewsModal.tsx";
 import EditNewsModal from "../components/EditNewsModal.tsx";
-import { News, deleteNews } from "../api/newsApi.ts";
 import { useMutation } from "@tanstack/react-query";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 const Dashboard: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
+  const [allNews, setAllNews] = useState<News[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string | "">("");
+  const [selectedDate, setSelectedDate] = useState<string>("");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [sortField, setSortField] = useState<
+    "title" | "content" | "date" | "category_name"
+  >("date");
   const { isLoggedIn } = useContext(AuthContext);
 
-  // Modal state
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editingNews, setEditingNews] = useState<News | null>(null);
 
-  // Mutation for deleting news with toasts
   const deleteMutation = useMutation<void, Error, number>({
     mutationFn: deleteNews,
     onSuccess: () => {
@@ -37,6 +54,13 @@ const Dashboard: React.FC = () => {
       try {
         const categoriesData = await fetchCategories();
         setCategories(categoriesData);
+
+        const allNewsData: News[] = [];
+        for (const category of categoriesData) {
+          const newsInCategory = await fetchNewsByCategoryId(category.id);
+          allNewsData.push(...newsInCategory);
+        }
+        setAllNews(allNewsData);
       } catch (err) {
         toast.error("Failed to load categories.");
       } finally {
@@ -46,6 +70,46 @@ const Dashboard: React.FC = () => {
 
     fetchAllCategories();
   }, []);
+
+  const filteredNews = allNews
+    .filter((news) =>
+      searchTerm.trim()
+        ? news.title.toLowerCase().includes(searchTerm.toLowerCase().trim()) ||
+          news.content.toLowerCase().includes(searchTerm.toLowerCase().trim())
+        : true
+    )
+    .filter((news) =>
+      selectedCategory ? news.category_name === selectedCategory : true
+    )
+    .filter((news) =>
+      selectedCategory ? news.category_name === selectedCategory : true
+    )
+    .filter((news) => (selectedDate ? news.date.includes(selectedDate) : true))
+    .sort((a, b) => {
+      if (sortField === "date") {
+        // Special handling for dates
+        const dateA = new Date(a.date).getTime();
+        const dateB = new Date(b.date).getTime();
+        return sortOrder === "asc" ? dateA - dateB : dateB - dateA;
+      } else {
+        // Handle string sorting correctly
+        if (sortOrder === "asc") {
+          return a[sortField].localeCompare(b[sortField]);
+        } else {
+          return b[sortField].localeCompare(a[sortField]);
+        }
+      }
+    });
+
+  useEffect(() => {
+    if (sortField == "category_name") {
+      if (sortOrder == "asc") {
+        setCategories(categories.sort((a, b) => b.name.localeCompare(a.name)));
+      } else {
+        setCategories(categories.sort((a, b) => a.name.localeCompare(b.name)));
+      }
+    }
+  }, [sortOrder]);
 
   const handleOpenCreateModal = () => setCreateModalOpen(true);
   const handleCloseCreateModal = () => setCreateModalOpen(false);
@@ -80,7 +144,6 @@ const Dashboard: React.FC = () => {
 
   return (
     <Box sx={{ p: 4 }}>
-      {/* Toast Container */}
       <ToastContainer position="top-right" autoClose={3000} />
 
       <Box
@@ -104,26 +167,92 @@ const Dashboard: React.FC = () => {
           </Button>
         )}
       </Box>
+
+      <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mb: 4 }}>
+        <TextField
+          label="Search News"
+          variant="outlined"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          sx={{ flex: 1, minWidth: "250px" }}
+        />
+
+        <TextField
+          label="Filter by Date"
+          type="date"
+          InputLabelProps={{ shrink: true }}
+          value={selectedDate}
+          onChange={(e) => setSelectedDate(e.target.value)}
+          sx={{ flex: 1, minWidth: "250px" }}
+        />
+
+        <FormControl sx={{ flex: 1, minWidth: "250px" }}>
+          <InputLabel>Filter by Category</InputLabel>
+          <Select
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+          >
+            <MenuItem value="">All Categories</MenuItem>
+            {categories.map((category) => (
+              <MenuItem key={category.id} value={category.name}>
+                {category.name}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        <FormControl sx={{ flex: 1, minWidth: "250px" }}>
+          <InputLabel>Sort By</InputLabel>
+          <Select
+            value={sortField}
+            onChange={(e) =>
+              setSortField(
+                e.target.value as "title" | "content" | "date" | "category_name"
+              )
+            }
+          >
+            <MenuItem value="title">Title</MenuItem>
+            <MenuItem value="content">Content</MenuItem>
+            <MenuItem value="date">Date</MenuItem>
+            <MenuItem value="category_name">Category</MenuItem>
+          </Select>
+        </FormControl>
+
+        <Button
+          variant="contained"
+          onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
+        >
+          {sortOrder === "asc"
+            ? `Sort ${sortField} Descending ⬇️`
+            : `Sort ${sortField} Ascending ⬆️`}
+        </Button>
+      </Box>
+
       <Grid container spacing={4}>
-        {categories.map((category) => (
-          <Grid item xs={12} key={category.id}>
-            <CategoryContainer
-              categoryId={category.id}
-              categoryName={category.name}
-              onEdit={handleOpenEditModal}
-              onDelete={handleDelete}
-            />
-          </Grid>
-        ))}
+        {categories.map((category) => {
+          const categoryFilteredNews = filteredNews.filter(
+            (news) => news.category_name === category.name
+          );
+          if (categoryFilteredNews.length === 0) return null;
+
+          return (
+            <Grid item xs={12} key={category.id}>
+              <CategoryContainer
+                categoryId={category.id}
+                categoryName={category.name}
+                onEdit={handleOpenEditModal}
+                onDelete={handleDelete}
+                news={categoryFilteredNews}
+              />
+            </Grid>
+          );
+        })}
       </Grid>
 
-      {/* Modal for creating news */}
       <CreateNewsModal
         open={createModalOpen}
         onClose={handleCloseCreateModal}
       />
-
-      {/* Modal for editing news */}
       {editingNews && (
         <EditNewsModal
           open={editModalOpen}
