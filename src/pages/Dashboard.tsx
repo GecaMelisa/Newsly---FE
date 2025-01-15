@@ -71,6 +71,20 @@ const Dashboard: React.FC = () => {
     fetchAllCategories();
   }, []);
 
+  const handleNewsCreated = (newNews: News) => {
+    setAllNews((prevNews) => [
+      {
+        ...newNews,
+        date: new Date(newNews.date).toLocaleDateString("en-GB", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        }),
+      },
+      ...prevNews,
+    ]);
+  };
+
   const filteredNews = allNews
     .filter((news) =>
       searchTerm.trim()
@@ -81,35 +95,18 @@ const Dashboard: React.FC = () => {
     .filter((news) =>
       selectedCategory ? news.category_name === selectedCategory : true
     )
-    .filter((news) =>
-      selectedCategory ? news.category_name === selectedCategory : true
-    )
     .filter((news) => (selectedDate ? news.date.includes(selectedDate) : true))
     .sort((a, b) => {
       if (sortField === "date") {
-        // Special handling for dates
         const dateA = new Date(a.date).getTime();
         const dateB = new Date(b.date).getTime();
         return sortOrder === "asc" ? dateA - dateB : dateB - dateA;
       } else {
-        // Handle string sorting correctly
-        if (sortOrder === "asc") {
-          return a[sortField].localeCompare(b[sortField]);
-        } else {
-          return b[sortField].localeCompare(a[sortField]);
-        }
+        return sortOrder === "asc"
+          ? a[sortField].localeCompare(b[sortField])
+          : b[sortField].localeCompare(a[sortField]);
       }
     });
-
-  useEffect(() => {
-    if (sortField == "category_name") {
-      if (sortOrder == "asc") {
-        setCategories(categories.sort((a, b) => b.name.localeCompare(a.name)));
-      } else {
-        setCategories(categories.sort((a, b) => a.name.localeCompare(b.name)));
-      }
-    }
-  }, [sortOrder]);
 
   const handleOpenCreateModal = () => setCreateModalOpen(true);
   const handleCloseCreateModal = () => setCreateModalOpen(false);
@@ -168,65 +165,11 @@ const Dashboard: React.FC = () => {
         )}
       </Box>
 
-      <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mb: 4 }}>
-        <TextField
-          label="Search News"
-          variant="outlined"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          sx={{ flex: 1, minWidth: "250px" }}
-        />
-
-        <TextField
-          label="Filter by Date"
-          type="date"
-          InputLabelProps={{ shrink: true }}
-          value={selectedDate}
-          onChange={(e) => setSelectedDate(e.target.value)}
-          sx={{ flex: 1, minWidth: "250px" }}
-        />
-
-        <FormControl sx={{ flex: 1, minWidth: "250px" }}>
-          <InputLabel>Filter by Category</InputLabel>
-          <Select
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-          >
-            <MenuItem value="">All Categories</MenuItem>
-            {categories.map((category) => (
-              <MenuItem key={category.id} value={category.name}>
-                {category.name}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
-        <FormControl sx={{ flex: 1, minWidth: "250px" }}>
-          <InputLabel>Sort By</InputLabel>
-          <Select
-            value={sortField}
-            onChange={(e) =>
-              setSortField(
-                e.target.value as "title" | "content" | "date" | "category_name"
-              )
-            }
-          >
-            <MenuItem value="title">Title</MenuItem>
-            <MenuItem value="content">Content</MenuItem>
-            <MenuItem value="date">Date</MenuItem>
-            <MenuItem value="category_name">Category</MenuItem>
-          </Select>
-        </FormControl>
-
-        <Button
-          variant="contained"
-          onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
-        >
-          {sortOrder === "asc"
-            ? `Sort ${sortField} Descending ⬇️`
-            : `Sort ${sortField} Ascending ⬆️`}
-        </Button>
-      </Box>
+      <CreateNewsModal
+        open={createModalOpen}
+        onClose={handleCloseCreateModal}
+        onNewsCreated={handleNewsCreated}
+      />
 
       <Grid container spacing={4}>
         {categories.map((category) => {
@@ -249,10 +192,6 @@ const Dashboard: React.FC = () => {
         })}
       </Grid>
 
-      <CreateNewsModal
-        open={createModalOpen}
-        onClose={handleCloseCreateModal}
-      />
       {editingNews && (
         <EditNewsModal
           open={editModalOpen}

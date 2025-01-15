@@ -31,6 +31,14 @@ const Navbar: React.FC = () => {
           <Button color="inherit" component={Link} to="/" sx={{ mx: 1 }}>
             Dashboard
           </Button>
+          <Button
+            color="inherit"
+            component={Link}
+            to="/category-news-summary"
+            sx={{ mx: 1 }}
+          >
+            Category Summary
+          </Button>
           {!isLoggedIn ? (
             <>
               <Button
