@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -8,32 +8,58 @@ import {
   Button,
   CircularProgress,
   Box,
+  MenuItem,
+  Select,
+  FormControl,
+  InputLabel,
 } from "@mui/material";
-import { useMutation } from "@tanstack/react-query";
-import { createNews, CreateNewsPayload } from "../api/newsApi.ts";
-import { suggestCategory } from "../api/categoryApi.ts";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { createNews, CreateNewsPayload, News } from "../api/newsApi.ts";
+import {
+  suggestCategory,
+  fetchCategories,
+  Category,
+} from "../api/categoryApi.ts";
 import { getUserIdFromToken } from "../utils/tokenUtils.ts";
 import { toast } from "react-toastify";
 
 interface CreateNewsModalProps {
   open: boolean;
   onClose: () => void;
+  onNewsCreated: (newNews: News) => void;
 }
 
-const CreateNewsModal: React.FC<CreateNewsModalProps> = ({ open, onClose }) => {
+const CreateNewsModal: React.FC<CreateNewsModalProps> = ({
+  open,
+  onClose,
+  onNewsCreated,
+}) => {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [categoryName, setCategoryName] = useState<string | undefined>(
-    undefined
-  );
+  const [categoryName, setCategoryName] = useState<string | "">("");
   const [date, setDate] = useState("");
+  const [categories, setCategories] = useState<Category[]>([]);
   const [suggestionLoading, setSuggestionLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const data = await fetchCategories();
+        setCategories(data);
+      } catch (err) {
+        toast.error("Failed to load categories.");
+      }
+    };
+    loadCategories();
+  }, []);
 
   const mutation = useMutation({
     mutationFn: createNews,
-    onSuccess: () => {
+    onSuccess: (newNews) => {
       toast.success("News created successfully! 🎉");
+      onNewsCreated(newNews); // Update the dashboard without page reload
       onClose();
     },
     onError: (error) => {
@@ -59,15 +85,12 @@ const CreateNewsModal: React.FC<CreateNewsModalProps> = ({ open, onClose }) => {
   };
 
   const handleSubmit = () => {
-    const user_id = getUserIdFromToken(); // Ensure the token is correctly retrieved
-
+    const user_id = getUserIdFromToken();
     const rawDate = date.split("-");
-    const newDate = rawDate[2] + "." + rawDate[1] + "." + rawDate[0] + ".";
-    console.log(newDate);
+    const newDate = `${rawDate[2]}.${rawDate[1]}.${rawDate[0]}.`;
 
     if (!user_id) {
       setError("User not authenticated. Please log in again.");
-      console.error("User ID not found in token.");
       return;
     }
 
@@ -84,7 +107,6 @@ const CreateNewsModal: React.FC<CreateNewsModalProps> = ({ open, onClose }) => {
       user_id,
     };
 
-    console.log("Submitting payload:", payload);
     mutation.mutate(payload);
   };
 
@@ -113,27 +135,36 @@ const CreateNewsModal: React.FC<CreateNewsModalProps> = ({ open, onClose }) => {
           onChange={(e) => setContent(e.target.value)}
           sx={{ mb: 2 }}
         />
-        <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-          <TextField
-            label="Category Name"
-            fullWidth
-            value={categoryName || ""}
+
+        <FormControl fullWidth sx={{ mb: 2 }}>
+          <InputLabel>Category Name</InputLabel>
+          <Select
+            value={categoryName}
             onChange={(e) => setCategoryName(e.target.value)}
-          />
-          <Button
-            onClick={handleSuggestCategory}
-            variant="outlined"
-            color="primary"
-            disabled={suggestionLoading}
-            sx={{ ml: 2 }}
           >
-            {suggestionLoading ? (
-              <CircularProgress size={20} sx={{ color: "primary.main" }} />
-            ) : (
-              "Suggest Category"
-            )}
-          </Button>
-        </Box>
+            <MenuItem value="">Select a Category</MenuItem>
+            {categories.map((category) => (
+              <MenuItem key={category.id} value={category.name}>
+                {category.name}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        <Button
+          onClick={handleSuggestCategory}
+          variant="outlined"
+          color="primary"
+          disabled={suggestionLoading}
+          sx={{ mb: 2 }}
+        >
+          {suggestionLoading ? (
+            <CircularProgress size={20} sx={{ color: "primary.main" }} />
+          ) : (
+            "Suggest Category"
+          )}
+        </Button>
+
         <TextField
           label="Date"
           type="date"

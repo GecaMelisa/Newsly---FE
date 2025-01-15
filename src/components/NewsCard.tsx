@@ -26,7 +26,14 @@ const NewsCard: React.FC<NewsCardProps> = ({
   onDelete,
 }) => {
   const { isLoggedIn } = useContext(AuthContext);
-  const userEmail = isLoggedIn ? getUserEmailFromToken() : null; // Decode user email only if logged in
+  const userEmail = isLoggedIn ? getUserEmailFromToken() : null;
+
+  // Format date to remove seconds
+  const formattedDate = new Date(news.date).toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
 
   return (
     <Card
@@ -42,7 +49,7 @@ const NewsCard: React.FC<NewsCardProps> = ({
       <CardContent>
         <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
           <Chip label={news.category_name || "News"} color="primary" />
-          <Typography variant="caption">{news.date}</Typography>
+          <Typography variant="caption">{formattedDate}</Typography>
         </Box>
         <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
           {news.title}
@@ -54,7 +61,6 @@ const NewsCard: React.FC<NewsCardProps> = ({
           Published by: <strong>{news.user_name}</strong>
         </Typography>
 
-        {/* Show Edit and Delete buttons only for the logged-in user's news */}
         {isLoggedIn && news.email === userEmail && (
           <Stack direction="row" spacing={1} sx={{ mt: 2 }}>
             <Button
@@ -62,9 +68,8 @@ const NewsCard: React.FC<NewsCardProps> = ({
               color="primary"
               size="small"
               onClick={(e) => {
-                e.stopPropagation(); // Prevent modal from opening
+                e.stopPropagation();
                 onEdit(news);
-                console.log(news);
               }}
             >
               Edit
@@ -74,7 +79,7 @@ const NewsCard: React.FC<NewsCardProps> = ({
               color="error"
               size="small"
               onClick={(e) => {
-                e.stopPropagation(); // Prevent modal from opening
+                e.stopPropagation();
                 onDelete(news.id);
               }}
             >

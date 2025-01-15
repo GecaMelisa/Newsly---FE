@@ -12,7 +12,7 @@ import { News } from "../api/newsApi.ts";
 interface NewsDetailsModalProps {
   open: boolean;
   onClose: () => void;
-  news: News | null; // Pass the selected news item
+  news: News | null;
 }
 
 const NewsDetailsModal: React.FC<NewsDetailsModalProps> = ({
@@ -22,13 +22,20 @@ const NewsDetailsModal: React.FC<NewsDetailsModalProps> = ({
 }) => {
   if (!news) return null;
 
+  // Remove seconds and format the date properly
+  const formattedDate = new Date(news.date).toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
       <DialogTitle>{news.title}</DialogTitle>
       <DialogContent>
         <Box sx={{ mb: 2 }}>
           <Typography variant="subtitle2" color="text.secondary">
-            Date: {news.date}
+            Date: {formattedDate}
           </Typography>
         </Box>
         <Typography variant="body1" sx={{ mb: 2 }}>

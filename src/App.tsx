@@ -4,6 +4,7 @@ import Dashboard from "./pages/Dashboard.tsx";
 import Navbar from "./components/Navbar.tsx";
 import Login from "./pages/Login.tsx";
 import Register from "./pages/Register.tsx";
+import CategoryNewsSummary from "./pages/CategoryNewsSummary.tsx";
 
 const App: React.FC = () => {
   return (
@@ -13,6 +14,10 @@ const App: React.FC = () => {
         <Route path="/" element={<Dashboard />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route
+          path="/category-news-summary"
+          element={<CategoryNewsSummary />}
+        />
       </Routes>
     </>
   );

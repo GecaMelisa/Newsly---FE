@@ -62,7 +62,7 @@ export const createNews = async (data: CreateNewsPayload): Promise<News> => {
     headers: { Authorization: `Bearer ${token}` },
   });
   await queryClient.invalidateQueries({ queryKey: ["news"] });
-  window.location.reload(); // Force page reload after creating news
+  //window.location.reload(); // Force page reload after creating news
   return response.data;
 };
 
