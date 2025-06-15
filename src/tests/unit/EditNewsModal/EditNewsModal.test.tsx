@@ -3,7 +3,6 @@ import { describe, test, expect, vi, beforeEach } from "vitest";
 import EditNewsModal from "../../../components/EditNewsModal";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-// Mock toast
 vi.mock("react-toastify", () => ({
   toast: {
     success: vi.fn(),
@@ -12,12 +11,10 @@ vi.mock("react-toastify", () => ({
   },
 }));
 
-// Mock token utils
 vi.mock("../../../utils/tokenUtils", () => ({
   getUserIdFromToken: () => 1,
 }));
 
-// Mock API
 vi.mock("../../../api/newsApi", () => ({
   updateNews: vi.fn().mockResolvedValue({}),
 }));
